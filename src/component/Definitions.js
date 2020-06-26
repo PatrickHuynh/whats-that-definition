@@ -48,11 +48,12 @@ function Definitions(props) {
     setDefinitionState(Math.max(1, definitionState + 1));
   };
 
-  const handleShow = () => {
+  const handleReveal = () => {
     setDefinitionState(-1);
   };
 
   const handleSubmitAnswer = () => {
+    let checkAnswerScore = 0;
     if (definition.definition ? (answer ? true : false) : false) {
       let modifiedDefinition = definition.definition
         .match(/\b(\w+)\b/g)
@@ -64,13 +65,18 @@ function Definitions(props) {
         .join(" ")
         .replace(/[^\w\s]|_/g, "")
         .toLowerCase();
-      setAnswerScore(
-        stringSimilarity.compareTwoStrings(modifiedDefinition, modifiedAnswer)
+      checkAnswerScore = stringSimilarity.compareTwoStrings(
+        modifiedDefinition,
+        modifiedAnswer
       );
     } else {
-      setAnswerScore(0);
+      checkAnswerScore = 0;
     }
+    setAnswerScore(checkAnswerScore);
     setAnswerSubmitted(true);
+    if (checkAnswerScore >= 1) {
+      setDefinitionState(-1);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -156,14 +162,16 @@ function Definitions(props) {
             Next Random Definition
           </button>
           <button
-            disabled={answer ? false : true}
+            disabled={answer ? (definitionState === -1 ? true : false) : true}
             className="btn btn-success m-2"
             onClick={handleSubmitAnswer}
           >
             Submit Answer
           </button>
           <button
-            disabled={definition.name ? false : true}
+            disabled={
+              definition.name ? (definitionState === -1 ? true : false) : true
+            }
             className="btn btn-warning m-2"
             style={{ width: "120px" }}
             onClick={handleHint}
@@ -171,9 +179,11 @@ function Definitions(props) {
             {hintButtonText}
           </button>
           <button
-            disabled={definition.name ? false : true}
+            disabled={
+              definition.name ? (definitionState === -1 ? true : false) : true
+            }
             className="btn btn-danger m-2"
-            onClick={handleShow}
+            onClick={handleReveal}
           >
             Reveal
           </button>
