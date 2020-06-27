@@ -5,6 +5,37 @@ import stringSimilarity from "string-similarity";
 import stopwords from "../data/stopwords";
 import definitions from "../data/definitions";
 
+function PowerLevelBar(props) {
+  const calcWidths = () => {
+    let widths = {
+      0: Math.min(Math.max(0, props.powerLevel), 60),
+      1: Math.min(Math.max(0, props.powerLevel - 60), 20),
+      2: Math.min(Math.max(0, props.powerLevel - 80), 20),
+    };
+    return widths;
+  };
+
+  return (
+    <div className="progress" style={{ height: `25px` }}>
+      <div
+        className="progress-bar bg-danger"
+        role="progressbar"
+        style={{ width: `${calcWidths()[0]}%` }}
+      ></div>
+      <div
+        className="progress-bar bg-warning"
+        role="progressbar"
+        style={{ width: `${calcWidths()[1]}%` }}
+      ></div>
+      <div
+        className="progress-bar bg-success"
+        role="progressbar"
+        style={{ width: `${calcWidths()[2]}%` }}
+      ></div>
+    </div>
+  );
+}
+
 function Definitions(props) {
   const [definitionArray, setDefinitionArray] = useState(definitions);
   const [definition, setDefinition] = useState(
@@ -14,17 +45,25 @@ function Definitions(props) {
   const [hintButtonText, setHintButtonText] = useState("Hint");
   const [answerScore, setAnswerScore] = useState(0);
   const [answer, setAnswer] = useState("");
-  const [powerLevel, setPowerLevel] = useState(0);
+  const [powerLevel, setPowerLevel] = useState(100);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
 
   useEffect(() => {
     getDefintitions();
-  }, []);
+    const powerLevelTimer = setTimeout(() => {
+      setPowerLevelWithRange(powerLevel - 0.25);
+    }, 250);
+    return () => clearTimeout(powerLevelTimer);
+  });
 
   const getDefintitions = async () => {
     // let url = "http://192.168.1.20:8529/_db/_system/api/get/all/objects";
     // let result = await axios.get(url);
     setDefinitionArray(definitions);
+  };
+
+  const setPowerLevelWithRange = (powerLevel) => {
+    setPowerLevel(Math.min(100, Math.max(0, powerLevel)));
   };
 
   const handleNext = async () => {
@@ -35,6 +74,9 @@ function Definitions(props) {
       nextDefinitionIndex = Math.floor(Math.random() * definitions.length);
       i++;
     } while (nextDefinitionIndex !== currentDefinitionIndex && i < 5);
+    if (!(definitionState === -1)) {
+      setPowerLevelWithRange(powerLevel - 5);
+    }
     setDefinition(definitions[Math.floor(Math.random() * definitions.length)]);
     setDefinitionState(0);
     setHintButtonText("Hint");
@@ -46,6 +88,7 @@ function Definitions(props) {
   const handleHint = () => {
     setHintButtonText("Hint Again");
     setDefinitionState(Math.max(1, definitionState + 1));
+    setPowerLevelWithRange(powerLevel - 5);
   };
 
   const handleReveal = () => {
@@ -75,12 +118,23 @@ function Definitions(props) {
     setAnswerScore(checkAnswerScore);
     setAnswerSubmitted(true);
     if (checkAnswerScore >= 1) {
+      setPowerLevelWithRange(powerLevel + 30);
       setDefinitionState(-1);
+    } else {
+      setPowerLevelWithRange(powerLevel - 10);
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.charCode === 13) {
+    let keyCode = e.keyCode || e.which;
+    if (keyCode === 13 || keyCode === 10) {
+      e.preventDefault();
+      if (!(definitionState === -1)) {
+        handleSubmitAnswer();
+      }
+    }
+    if (definitionState === -1) {
+      handleNext();
     }
   };
 
@@ -136,18 +190,21 @@ function Definitions(props) {
         </div>
       </div>
       <div
-        className="row justify-content-center align-items-center"
+        className="row m-5 justify-content-center align-items-center"
         style={{ height: "100px" }}
       >
-        <div className="col">
+        <div className="col p-3 bg-light">
           <h3>{definition.name}</h3>
         </div>
       </div>
-      <div className="row d-flex justify-content-center m-3">
+      <div className="row d-flex justify-content-center">
         <div className="col-8">
           <textarea
             className="form-control"
-            placeholder="Your answer.."
+            placeholder="Your answer..."
+            onKeyPress={(e) => {
+              handleKeyPress(e);
+            }}
             onChange={(e) => {
               setAnswer(e.target.value);
               setAnswerSubmitted(false);
@@ -156,7 +213,7 @@ function Definitions(props) {
           ></textarea>
         </div>
       </div>
-      <div className="row">
+      <div className="row m-3">
         <div className="col">
           <button className="btn btn-primary m-2" onClick={handleNext}>
             Next Random Definition
@@ -191,14 +248,14 @@ function Definitions(props) {
       </div>
       <div className="row">
         <div className="col">
-          <mark>(Scoring mechanism under development!)</mark>
+          <PowerLevelBar powerLevel={powerLevel} />
         </div>
       </div>
       <div
-        className="row m-5 justify-content-center align-items-center"
-        style={{ height: "100px" }}
+        className="row m-5 bg-light justify-content-center align-items-center"
+        style={{ minHeight: "100px" }}
       >
-        <div className="col">
+        <div className="col p-3 ">
           <div style={{ fontSize: "24px", fontFamily: "Lucida Console" }}>
             {maskDefinition(definition.definition, definitionState)}
           </div>
@@ -217,24 +274,3 @@ function Definitions(props) {
 }
 
 export default Definitions;
-
-/*
-
-      <div className="row">
-        {true ? (
-          <></>
-        ) : (
-          <table className="table table-sm text-left">
-            <tbody>
-              {defns.map((def) => (
-                <tr key={def.name}>
-                  <td>{def.name}</td>
-                  <td>{def.definition}</td>
-                  <td>{maskDefinition(def.definition)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-      */
