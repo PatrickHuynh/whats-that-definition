@@ -7,16 +7,12 @@ import definitions from "../data/definitions";
 
 import logo from "../book-open-flat.png";
 
-function PowerLevelBar(props) {
-  const calcWidths = () => {
-    let widths = {
-      0: Math.min(Math.max(0, props.powerLevel), 60),
-      1: Math.min(Math.max(0, props.powerLevel - 60), 20),
-      2: Math.min(Math.max(0, props.powerLevel - 80), 20),
-    };
-    return widths;
-  };
+// ---------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------
 
+function PowerLevelBar(props) {
   const calcState = () => {
     let barState = 0;
     if (props.powerLevel > 80) {
@@ -42,30 +38,56 @@ function PowerLevelBar(props) {
   );
 }
 
-/*
+// ---------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------
 
-      <div
-        className="progress-bar bg-danger"
-        role="progressbar"
-        style={{ width: `${calcWidths()[0]}%` }}
-      ></div>
-      <div
-        className="progress-bar bg-warning"
-        role="progressbar"
-        style={{ width: `${calcWidths()[1]}%` }}
-      ></div>
-      <div
-        className="progress-bar bg-success"
-        role="progressbar"
-        style={{ width: `${calcWidths()[2]}%` }}
-      ></div>*/
+const maskWordList = (definition) => {
+  let words = definition.match(/\b(\w+)\b/g);
+  let wordProps = [];
+  let stopWordIndex = [];
+  let wordMaskIndex = [];
+  let wordIndex;
+  for (wordIndex in words) {
+    wordProps.push({
+      wordIndex: wordIndex,
+      word: words[wordIndex],
+      stopWord: stopwords.indexOf(words[wordIndex]) !== -1,
+      maskWord: stopwords.indexOf(words[wordIndex]) === -1,
+    });
+  }
+  let scoreWords = [];
+  for (let i = 0; i < wordProps.length; i++) {
+    if (!wordProps[i]["stopWord"]) {
+      scoreWords.push(wordProps[i]["word"]);
+    }
+  }
+  return [wordProps, scoreWords];
+};
+
+const getDefinitionWithProps = (definition) => {
+  let definitionWithProps = definition;
+  let [wordProps, scoreWords] = maskWordList(definition.definition);
+  definitionWithProps["wordProps"] = wordProps;
+  definitionWithProps["scoreWords"] = scoreWords;
+  return definitionWithProps;
+};
+
+// ---------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------
 
 function Definitions(props) {
   const [definitionArray, setDefinitionArray] = useState(definitions);
   const [definition, setDefinition] = useState(
-    definitionArray[Math.floor(Math.random() * definitionArray.length)]
+    getDefinitionWithProps(
+      definitionArray[Math.floor(Math.random() * definitionArray.length)]
+    )
   );
-  const [definitionState, setDefinitionState] = useState(0);
+  const [definitionHintState, setDefinitionHintState] = useState(0);
+
   const [hintButtonText, setHintButtonText] = useState("Hint");
   const [answerScore, setAnswerScore] = useState(0);
   const [answer, setAnswer] = useState("");
@@ -73,24 +95,18 @@ function Definitions(props) {
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
 
   useEffect(() => {
-    getDefintitions();
     const powerLevelTimer = setTimeout(() => {
       setPowerLevelWithRange(powerLevel - 0.25);
     }, 250);
     return () => clearTimeout(powerLevelTimer);
   });
 
-  const getDefintitions = async () => {
-    // let url = "http://192.168.1.20:8529/_db/_system/api/get/all/objects";
-    // let result = await axios.get(url);
-    setDefinitionArray(definitions);
-  };
-
   const setPowerLevelWithRange = (powerLevel) => {
     setPowerLevel(Math.min(100, Math.max(0, powerLevel)));
   };
 
-  const handleNext = async () => {
+  const handleNext = () => {
+    // pick a different defintion
     let currentDefinitionIndex = definitionArray.indexOf(definition);
     let nextDefinitionIndex = Math.floor(Math.random() * definitions.length);
     let i = 0;
@@ -98,11 +114,15 @@ function Definitions(props) {
       nextDefinitionIndex = Math.floor(Math.random() * definitions.length);
       i++;
     } while (nextDefinitionIndex === currentDefinitionIndex && i < 5);
-    if (!(definitionState === -1)) {
+    setDefinition(getDefinitionWithProps(definitions[nextDefinitionIndex]));
+
+    // if the answer has already been revealed
+    if (definitionHintState === -1) {
       setPowerLevelWithRange(powerLevel - 5);
     }
-    setDefinition(definitions[Math.floor(Math.random() * definitions.length)]);
-    setDefinitionState(0);
+
+    // reset form
+    setDefinitionHintState(0);
     setHintButtonText("Hint");
     setAnswer("");
     setAnswerScore(0);
@@ -110,13 +130,18 @@ function Definitions(props) {
   };
 
   const handleHint = () => {
+    setDefinitionHintState(1);
+
+    // update form
     setHintButtonText("Hint Again");
-    setDefinitionState(Math.max(1, definitionState + 1));
+
+    // update score progress
     setPowerLevelWithRange(powerLevel - 5);
   };
 
   const handleReveal = () => {
-    setDefinitionState(-1);
+    setDefinitionHintState(-1);
+    setPowerLevelWithRange(powerLevel - 5);
   };
 
   const handleSubmitAnswer = () => {
@@ -140,13 +165,13 @@ function Definitions(props) {
       checkAnswerScore = 0;
     }
     if (checkAnswerScore < 100) {
-      setDefinitionState(Math.max(1, definitionState));
+      setDefinitionHintState(1);
     }
     setAnswerScore(checkAnswerScore);
     setAnswerSubmitted(true);
     if (checkAnswerScore >= 1) {
       setPowerLevelWithRange(powerLevel + 30);
-      setDefinitionState(-1);
+      setDefinitionHintState(-1);
     } else {
       setPowerLevelWithRange(powerLevel - 10);
     }
@@ -156,11 +181,11 @@ function Definitions(props) {
     let keyCode = e.keyCode || e.which;
     if (keyCode === 13 || keyCode === 10) {
       e.preventDefault();
-      if (!(definitionState === -1)) {
+      if (definitionHintState !== -1) {
         handleSubmitAnswer();
       }
     }
-    if (definitionState === -1) {
+    if (definitionHintState === -1) {
       handleNext();
     }
   };
@@ -181,33 +206,40 @@ function Definitions(props) {
     return encouragement;
   };
 
-  const maskDefinition = (text, textState) => {
-    try {
-      if (textState >= 1) {
-        let words = text.match(/\b(\w+)\b/g);
-        let wordIndex;
-        let hintWords = textState;
-        for (wordIndex in words) {
-          if (stopwords.indexOf(words[wordIndex]) === -1) {
-            if (hintWords > 1) {
-              hintWords -= 1;
-            } else {
-              words[wordIndex] = "_".repeat(words[wordIndex].length);
-            }
-          }
-        }
-        let textOutput = words.join(" ");
-        return textOutput;
-      } else if (textState === 0) {
-        return "";
-      } else if (textState === -1) {
-        return text;
-      } else {
-        return "state not found";
-      }
-    } catch (e) {
+  const showDefinition = () => {
+    if (definitionHintState === -1) {
+      return definition.definition;
+    } else if (definitionHintState === 1) {
+      return maskDefinition();
+    } else {
       return "";
     }
+  };
+
+  const maskDefinition = () => {
+    return definition.wordProps.map((wordProps) => {
+      let displayWord;
+      if (wordProps.maskWord) {
+        displayWord = "_".repeat(wordProps.word.length) + " ";
+        return (
+          <span
+            onClick={(e) => handleUnmaskWord(wordProps.wordIndex)}
+            style={{ fontSize: "24px", fontFamily: "Lucida Console" }}
+          >
+            {displayWord}
+          </span>
+        );
+      } else {
+        return <>{wordProps.word} </>;
+      }
+    });
+  };
+
+  const handleUnmaskWord = (wordIndex) => {
+    let wordProps = definition.wordProps.slice();
+    wordProps[wordIndex]["maskWord"] = false;
+    setDefinition({ ...definition, wordProps: wordProps });
+    setPowerLevelWithRange(powerLevel - 5);
   };
 
   return (
@@ -250,7 +282,9 @@ function Definitions(props) {
             Next Random Definition
           </button>
           <button
-            disabled={answer ? (definitionState === -1 ? true : false) : true}
+            disabled={
+              answer ? (definitionHintState === -1 ? true : false) : true
+            }
             className="btn btn-success m-2"
             onClick={handleSubmitAnswer}
           >
@@ -258,7 +292,11 @@ function Definitions(props) {
           </button>
           <button
             disabled={
-              definition.name ? (definitionState === -1 ? true : false) : true
+              definition.name
+                ? definitionHintState === -1
+                  ? true
+                  : false
+                : true
             }
             className="btn btn-warning m-2"
             style={{ width: "120px" }}
@@ -268,7 +306,11 @@ function Definitions(props) {
           </button>
           <button
             disabled={
-              definition.name ? (definitionState === -1 ? true : false) : true
+              definition.name
+                ? definitionHintState === -1
+                  ? true
+                  : false
+                : true
             }
             className="btn btn-danger m-2"
             onClick={handleReveal}
@@ -288,7 +330,7 @@ function Definitions(props) {
       >
         <div className="col p-2">
           <div style={{ fontSize: "24px", fontFamily: "Lucida Console" }}>
-            {maskDefinition(definition.definition, definitionState)}
+            {showDefinition()}
           </div>
         </div>
       </div>
