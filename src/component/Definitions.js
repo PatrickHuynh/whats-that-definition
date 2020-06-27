@@ -97,7 +97,7 @@ function Definitions(props) {
     do {
       nextDefinitionIndex = Math.floor(Math.random() * definitions.length);
       i++;
-    } while (nextDefinitionIndex !== currentDefinitionIndex && i < 5);
+    } while (nextDefinitionIndex === currentDefinitionIndex && i < 5);
     if (!(definitionState === -1)) {
       setPowerLevelWithRange(powerLevel - 5);
     }
