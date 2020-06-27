@@ -44,16 +44,16 @@ const definitions = [
   {
     name: "correct consequence",
     definition:
-      "a consequence that projects an unaccepted consequence to another person by means of the reason and pervasion being established from the perspective of the mind of the other person and [for which] the opponent with respect to whom it is set forth is unable to arrive at a factually concordant answer",
+      "a consequence that projects an unaccepted consequence to another person by means of the reason and pervasion being established from the perspective of the mind  of the other person and [for which] the opponent with respect to whom it is set forth is unable to arrive at a factually concordant answer",
   },
   {
     name: "correct consequence that projects a proof",
-    definition: "correct consequence that fulfills the opposites three modes",
+    definition: "correct consequence that fulfills the opposite's three modes",
   },
   {
     name: "correct consequence that does not project a proof",
     definition:
-      "correct consequence that does not fulfill the opposites three modes",
+      "correct consequence that does not fulfill the opposite's three modes",
   },
   {
     name: "pseudo consequence",

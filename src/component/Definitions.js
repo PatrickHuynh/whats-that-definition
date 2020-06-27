@@ -5,6 +5,8 @@ import stringSimilarity from "string-similarity";
 import stopwords from "../data/stopwords";
 import definitions from "../data/definitions";
 
+import logo from "../book-open-flat.png";
+
 function PowerLevelBar(props) {
   const calcWidths = () => {
     let widths = {
@@ -15,8 +17,33 @@ function PowerLevelBar(props) {
     return widths;
   };
 
+  const calcState = () => {
+    let barState = 0;
+    if (props.powerLevel > 80) {
+      barState = "bg-success";
+    } else if (props.powerLevel > 50) {
+      barState = "bg-warning";
+    } else {
+      barState = "bg-danger";
+    }
+    return barState;
+  };
+
   return (
-    <div className="progress" style={{ height: `25px` }}>
+    <div className="progress" style={{ height: `36px` }}>
+      <div
+        className={"progress-bar " + calcState()}
+        role="progressbar"
+        style={{ width: `${props.powerLevel}%`, fontSize: "24px" }}
+      >
+        Your Collection of Merit
+      </div>
+    </div>
+  );
+}
+
+/*
+
       <div
         className="progress-bar bg-danger"
         role="progressbar"
@@ -31,10 +58,7 @@ function PowerLevelBar(props) {
         className="progress-bar bg-success"
         role="progressbar"
         style={{ width: `${calcWidths()[2]}%` }}
-      ></div>
-    </div>
-  );
-}
+      ></div>*/
 
 function Definitions(props) {
   const [definitionArray, setDefinitionArray] = useState(definitions);
@@ -169,7 +193,8 @@ function Definitions(props) {
             }
           }
         }
-        return words.join(" ");
+        let textOutput = words.join(" ");
+        return textOutput;
       } else if (textState === 0) {
         return "";
       } else if (textState === -1) {
@@ -184,20 +209,23 @@ function Definitions(props) {
 
   return (
     <div className="container-fluid h-100">
-      <div className="row mt-5">
+      <div className="row m-2">
         <div className="col">
-          <h1>What's that defintion!?</h1>
+          <h1>
+            <img src={logo} style={{ width: "100px" }} /> What's that
+            defintion!?
+          </h1>
         </div>
       </div>
       <div
-        className="row m-5 justify-content-center align-items-center"
+        className="row m-2 justify-content-center align-items-center"
         style={{ height: "100px" }}
       >
-        <div className="col p-3 bg-light">
+        <div className="col p-2 bg-light">
           <h3>{definition.name}</h3>
         </div>
       </div>
-      <div className="row d-flex justify-content-center">
+      <div className="row m-2 d-flex justify-content-center">
         <div className="col-8">
           <textarea
             className="form-control"
@@ -213,7 +241,7 @@ function Definitions(props) {
           ></textarea>
         </div>
       </div>
-      <div className="row m-3">
+      <div className="row m-2">
         <div className="col">
           <button className="btn btn-primary m-2" onClick={handleNext}>
             Next Random Definition
@@ -246,16 +274,16 @@ function Definitions(props) {
           </button>
         </div>
       </div>
-      <div className="row">
+      <div className="row m-2">
         <div className="col">
           <PowerLevelBar powerLevel={powerLevel} />
         </div>
       </div>
       <div
-        className="row m-5 bg-light justify-content-center align-items-center"
+        className="row mt-3 m-2 bg-light justify-content-center align-items-center"
         style={{ minHeight: "100px" }}
       >
-        <div className="col p-3 ">
+        <div className="col p-2">
           <div style={{ fontSize: "24px", fontFamily: "Lucida Console" }}>
             {maskDefinition(definition.definition, definitionState)}
           </div>
