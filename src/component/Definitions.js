@@ -216,7 +216,7 @@ function Definitions(props) {
         <div className="col">
           <h1>
             <img src={logo} style={{ width: "100px" }} /> What's that
-            defintion!?
+            definition!?
           </h1>
         </div>
       </div>
