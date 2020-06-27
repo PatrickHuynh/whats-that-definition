@@ -139,6 +139,9 @@ function Definitions(props) {
     } else {
       checkAnswerScore = 0;
     }
+    if (checkAnswerScore < 100) {
+      setDefinitionState(Math.max(1, definitionState));
+    }
     setAnswerScore(checkAnswerScore);
     setAnswerSubmitted(true);
     if (checkAnswerScore >= 1) {
