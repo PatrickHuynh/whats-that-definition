@@ -1,5 +1,4 @@
 const stopwords = [
-  "s",
   "a",
   "about",
   "above",
