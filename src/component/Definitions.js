@@ -351,7 +351,7 @@ function Definitions(props) {
               <div className="col-8">
                 <textarea
                   className="form-control"
-                  placeholder="Type your answer... Note: punctuation and common 'functors' (e.g. 'as', 'the', 'that') are ignored when scoring your answer - i.e. only the 'blank words' are scored (+5 merit points per word)"
+                  placeholder="Type your answer... Pressing [Enter] submits your answer. Note: punctuation and common 'functors' (e.g. 'as', 'the', 'that') are ignored when scoring your answer - i.e. only the 'blank words' are scored (+5 merit points per word)"
                   onKeyPress={(e) => {
                     handleKeyPress(e);
                   }}
