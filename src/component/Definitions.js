@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import stringSimilarity from "string-similarity";
+import cloneDeep from "lodash/cloneDeep";
 
 import { ToastContainer, toast, Zoom } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -49,8 +50,6 @@ function PowerLevelBar(props) {
 const maskWordList = (definition) => {
   let words = definition.replace("'", "").match(/\b(\w+)\b/g);
   let wordProps = [];
-  let stopWordIndex = [];
-  let wordMaskIndex = [];
   let wordIndex;
   for (wordIndex in words) {
     wordProps.push({
@@ -58,37 +57,28 @@ const maskWordList = (definition) => {
       word: words[wordIndex],
       stopWord: stopwords.indexOf(words[wordIndex]) !== -1,
       maskWord: stopwords.indexOf(words[wordIndex]) === -1,
+      markedWord: false,
     });
   }
   let scoreWords = [];
+  let scoreWordsIndex = [];
   for (let i = 0; i < wordProps.length; i++) {
     if (!wordProps[i]["stopWord"]) {
       scoreWords.push(wordProps[i]["word"]);
+      scoreWordsIndex.push(i);
     }
   }
-  return [wordProps, scoreWords];
-};
-
-const scoreAnswer = (definition, answer, strictMode) => {
-  let modifiedDefinition;
-  let modifiedAnswer;
-  if (!strictMode) {
-    modifiedDefinition = definition.scoreWords.join(" ").toLowerCase();
-    modifiedAnswer = maskWordList(answer)[1].join(" ").toLowerCase();
-  } else {
-  }
-  let checkAnswerScore = stringSimilarity.compareTwoStrings(
-    modifiedDefinition,
-    modifiedAnswer
-  );
-  return checkAnswerScore;
+  return [wordProps, scoreWords, scoreWordsIndex];
 };
 
 const getDefinitionWithProps = (definition) => {
   let definitionWithProps = definition;
-  let [wordProps, scoreWords] = maskWordList(definition.definition);
+  let [wordProps, scoreWords, scoreWordsIndex] = maskWordList(
+    definition.definition
+  );
   definitionWithProps["wordProps"] = wordProps;
   definitionWithProps["scoreWords"] = scoreWords;
+  definitionWithProps["scoreWordsIndex"] = scoreWordsIndex;
   return definitionWithProps;
 };
 
@@ -191,7 +181,7 @@ function Definitions(props) {
     // check answer score
     let checkAnswerScore = 0;
     if (definition.definition ? (answer ? true : false) : false) {
-      checkAnswerScore = scoreAnswer(definition, answer, false);
+      checkAnswerScore = scoreAnswer(answer, false);
     } else {
       checkAnswerScore = 0;
     }
@@ -220,6 +210,33 @@ function Definitions(props) {
       setPowerLevelWithRange(powerLevel, -10, true);
       setHintButtonText("Click (........) for hint");
     }
+  };
+
+  const scoreAnswer = (answer, strictMode) => {
+    let modifiedDefinition;
+    let modifiedAnswer;
+    modifiedDefinition = definition.scoreWords;
+    modifiedAnswer = maskWordList(answer)[1];
+    if (!strictMode) {
+      let imax = Math.min(definition.scoreWords.length, modifiedAnswer.length);
+      for (let i = 0; i < imax; i++) {
+        if (
+          definition.scoreWords[i].toLowerCase() ===
+          modifiedAnswer[i].toLowerCase()
+        ) {
+          definition.wordProps[definition.scoreWordsIndex[i]].markedWord = true;
+          definition.wordProps[definition.scoreWordsIndex[i]].maskWord = false;
+        }
+      }
+    } else {
+      // todo hard mode i.e. word for word must be correct
+    }
+    let checkAnswerScore = stringSimilarity.compareTwoStrings(
+      modifiedDefinition.join(" ").toLowerCase(),
+      modifiedAnswer.join(" ").toLowerCase()
+    );
+    setDefinition(cloneDeep(definition));
+    return checkAnswerScore;
   };
 
   const handleKeyPress = (e) => {
@@ -263,9 +280,14 @@ function Definitions(props) {
 
   const maskDefinition = () => {
     return definition.wordProps.map((wordProps) => {
-      let displayWord;
-      if (wordProps.maskWord) {
-        displayWord = ".".repeat(wordProps.word.length);
+      // if is a stop word: just display it
+      if (wordProps.stopWord) {
+        return <>{wordProps.word} </>;
+      }
+      // if it is not a stop word:
+      else if (wordProps.maskWord) {
+        // if it is masked, then mask
+        let displayWord = ".".repeat(wordProps.word.length);
         return (
           <>
             <span
@@ -282,7 +304,22 @@ function Definitions(props) {
           </>
         );
       } else {
-        return <>{wordProps.word} </>;
+        // if it is marked === false then red
+        // if it is marked === true then green
+        return (
+          <>
+            <span
+              key={wordProps.wordIndex}
+              style={{
+                fontSize: "24px",
+                fontFamily: "Lucida Console",
+                backgroundColor: wordProps.markedWord ? "lime" : "red",
+              }}
+            >
+              {wordProps.word}
+            </span>{" "}
+          </>
+        );
       }
     });
   };
@@ -298,7 +335,6 @@ function Definitions(props) {
     let maskWordCount = maskWordCountList.reduce((sum, num) => {
       return sum + num;
     });
-    console.log(maskWordCount);
     if (maskWordCount === 0) {
       setDefinitionHintState(-1);
     }
