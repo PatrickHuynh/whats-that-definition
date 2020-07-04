@@ -48,12 +48,12 @@ const definitions = [
   },
   {
     name: "correct consequence that projects a proof",
-    definition: "correct consequence that fulfils the opposite's three modes",
+    definition: "correct consequence that fulfills the opposite's three modes",
   },
   {
     name: "correct consequence that does not project a proof",
     definition:
-      "correct consequence that does not fulfil the opposite's three modes",
+      "correct consequence that does not fulfill the opposite's three modes",
   },
   {
     name: "pseudo consequence",
