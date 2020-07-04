@@ -11,6 +11,12 @@ import definitions from "../data/definitions";
 
 import logo from "../book-open-flat.png";
 
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = new SpeechRecognition();
+recognition.continous = false;
+recognition.lang = "en-US";
+
 // ---------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------
@@ -102,6 +108,7 @@ function Definitions(props) {
   const [answer, setAnswer] = useState("");
   const [powerLevel, setPowerLevel] = useState(90);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
+  const [speechListening, setSpeechListening] = useState(false);
 
   useEffect(() => {
     const powerLevelTimer = setTimeout(() => {
@@ -207,6 +214,15 @@ function Definitions(props) {
       setDefinitionHintState(-1);
       setHintButtonText("Hint");
     } else {
+      let maskWordCountList = definition.wordProps.map((wordProp) => {
+        return wordProp.maskWord ? 1 : 0;
+      });
+      let maskWordCount = maskWordCountList.reduce((sum, num) => {
+        return sum + num;
+      });
+      if (maskWordCount === 0) {
+        setDefinitionHintState(-1);
+      }
       setPowerLevelWithRange(powerLevel, -10, true);
       setHintButtonText("Click (........) for hint");
     }
@@ -219,6 +235,9 @@ function Definitions(props) {
     modifiedAnswer = maskWordList(answer)[1];
     if (!strictMode) {
       let imax = Math.min(definition.scoreWords.length, modifiedAnswer.length);
+      for (let i = 0; i < definition.scoreWords.length; i++) {
+        definition.wordProps[definition.scoreWordsIndex[i]].markedWord = false;
+      }
       for (let i = 0; i < imax; i++) {
         if (
           definition.scoreWords[i].toLowerCase() ===
@@ -350,6 +369,18 @@ function Definitions(props) {
     setPowerLevelWithRange(powerLevel, 9000, true);
   };
 
+  const handleListen = () => {
+    setSpeechListening(true);
+    recognition.start();
+  };
+
+  const handleSpeechRecognitionResult = (event) => {
+    setAnswer(answer + " " + event.results[0][0].transcript);
+    setSpeechListening(false);
+  };
+
+  recognition.onresult = handleSpeechRecognitionResult;
+
   return (
     <>
       <div className="container-fluid h-100">
@@ -433,6 +464,19 @@ function Definitions(props) {
                   onClick={handleReveal}
                 >
                   Reveal
+                </button>
+                <button
+                  disabled={
+                    definition.name
+                      ? definitionHintState === -1
+                        ? true
+                        : false
+                      : true
+                  }
+                  className="btn btn-info m-2"
+                  onClick={handleListen}
+                >
+                  🎤 Speak
                 </button>
               </div>
             </div>
