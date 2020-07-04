@@ -373,7 +373,9 @@ function Definitions(props) {
 
   const handleListen = () => {
     setSpeechListening(true);
-    recognition.start();
+    if (!speechListening) {
+      recognition.start();
+    }
   };
 
   const handleSpeechRecognitionResult = (event) => {
@@ -419,6 +421,7 @@ function Definitions(props) {
             <div className="row m-2 d-flex justify-content-center">
               <div className="col-8">
                 <textarea
+                  autoFocus
                   className="form-control"
                   placeholder="Type your answer... Pressing [Enter] submits your answer. Note: punctuation and common 'functors' (e.g. 'as', 'the', 'that') are ignored when scoring your answer - i.e. only the 'blank words' are scored (+5 merit points per word)"
                   onKeyPress={(e) => {
@@ -471,6 +474,8 @@ function Definitions(props) {
                   disabled={
                     definition.name
                       ? definitionHintState === -1
+                        ? true
+                        : speechListening
                         ? true
                         : false
                       : true
