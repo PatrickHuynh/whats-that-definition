@@ -232,7 +232,9 @@ function Definitions(props) {
     let modifiedDefinition;
     let modifiedAnswer;
     modifiedDefinition = definition.scoreWords;
-    modifiedAnswer = maskWordList(answer)[1];
+    modifiedAnswer = maskWordList(answer)[1].map((e) => {
+      return e.toLowerCase();
+    });
     if (!strictMode) {
       let imax = Math.min(definition.scoreWords.length, modifiedAnswer.length);
       for (let i = 0; i < definition.scoreWords.length; i++) {
@@ -375,7 +377,7 @@ function Definitions(props) {
   };
 
   const handleSpeechRecognitionResult = (event) => {
-    setAnswer(answer + " " + event.results[0][0].transcript);
+    setAnswer((answer + " " + event.results[0][0].transcript).toLowerCase());
     setSpeechListening(false);
   };
 
@@ -423,7 +425,7 @@ function Definitions(props) {
                     handleKeyPress(e);
                   }}
                   onChange={(e) => {
-                    setAnswer(e.target.value);
+                    setAnswer(e.target.value.toLowerCase());
                     setAnswerSubmitted(false);
                   }}
                   value={answer}
