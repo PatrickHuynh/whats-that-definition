@@ -13,9 +13,13 @@ import logo from "../book-open-flat.png";
 
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
+const SpeechGrammarList =
+  window.SpeechGrammarList || window.webkitSpeechGrammarList;
+
 const recognition = new SpeechRecognition();
+
 recognition.continous = false;
-recognition.lang = "en-US";
+recognition.lang = "en-AU";
 
 // ---------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------
@@ -372,9 +376,19 @@ function Definitions(props) {
   };
 
   const handleListen = () => {
-    setSpeechListening(true);
     if (!speechListening) {
+      let grammar =
+        "#JSGF V1.0; grammar definition; public <definition> = " +
+        definition.definition
+          .replace("'", "")
+          .match(/\b(\w+)\b/g)
+          .join(" | ") +
+        " ;";
+      let speechRecognitionList = new SpeechGrammarList();
+      speechRecognitionList.addFromString(grammar, 1);
+      recognition.grammars = speechRecognitionList;
       recognition.start();
+      setSpeechListening(true);
     }
   };
 
